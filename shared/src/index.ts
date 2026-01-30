@@ -52,6 +52,12 @@ export interface GameState {
   winner: string | null;
 }
 
+// Media state for video/voice chat
+export interface MediaState {
+  video: boolean;
+  audio: boolean;
+}
+
 // Events from client to server
 export interface ClientToServerEvents {
   createRoom: (playerName: string, callback: (response: { success: boolean; roomCode?: string; error?: string }) => void) => void;
@@ -62,6 +68,9 @@ export interface ClientToServerEvents {
   drawTile: (callback: (response: { success: boolean; error?: string }) => void) => void;
   undoTurn: (callback: (response: { success: boolean; error?: string }) => void) => void;
   reconnect: (playerId: string, roomCode: string) => void;
+  // WebRTC signaling events
+  signal: (targetPlayerId: string, signalData: unknown) => void;
+  mediaStateChange: (state: MediaState) => void;
 }
 
 // Events from server to client
@@ -76,6 +85,10 @@ export interface ServerToClientEvents {
   roomJoined: (playerId: string) => void;
   reconnected: (data: { room: Room; gameState?: GameState; tiles?: Tile[] }) => void;
   reconnectFailed: (reason: string) => void;
+  // WebRTC signaling events
+  peerSignal: (fromPlayerId: string, signalData: unknown) => void;
+  peerMediaState: (playerId: string, state: MediaState) => void;
+  peerLeft: (playerId: string) => void;
 }
 
 // Socket data stored on each socket

@@ -204,6 +204,15 @@ export class RoomManager {
     return this.socketToPlayer.get(socketId) ?? null;
   }
 
+  getSocketIdByPlayerId(playerId: string): string | null {
+    for (const [socketId, pid] of this.socketToPlayer) {
+      if (pid === playerId) {
+        return socketId;
+      }
+    }
+    return null;
+  }
+
   removeSocketMapping(socketId: string): void {
     this.socketToPlayer.delete(socketId);
   }

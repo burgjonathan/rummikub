@@ -6,8 +6,13 @@ export default defineConfig({
   // Set via environment variable or default to '/' for local dev
   base: process.env.VITE_BASE_PATH || '/',
   plugins: [react()],
+  // Polyfill Node.js globals for simple-peer compatibility
+  define: {
+    global: 'globalThis',
+  },
   server: {
     port: 5173,
+    allowedHosts: ['rummikub.loca.lt'],
     proxy: {
       '/socket.io': {
         target: 'http://localhost:3001',

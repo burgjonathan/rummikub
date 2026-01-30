@@ -18,6 +18,8 @@ import GameBoard from './GameBoard';
 import PlayerHand from './PlayerHand';
 import PlayerList from './PlayerList';
 import { TileComponent } from './Tile';
+import { VideoChat } from './VideoChat';
+import { MediaControls } from './MediaControls';
 
 export default function Game() {
   const navigate = useNavigate();
@@ -311,13 +313,21 @@ export default function Game() {
 
         {/* Main game area */}
         <div className="flex gap-4 flex-1">
-          {/* Left sidebar - players */}
-          <div className="w-64 shrink-0">
+          {/* Left sidebar - players and video */}
+          <div className="w-64 shrink-0 flex flex-col gap-4">
             <PlayerList
               players={gameState.players}
               currentPlayerId={gameState.currentPlayerId}
               myPlayerId={playerId}
             />
+            
+            {/* Video Chat */}
+            <div className="bg-gray-800/50 rounded-lg p-3">
+              <VideoChat />
+              <div className="mt-3">
+                <MediaControls />
+              </div>
+            </div>
           </div>
 
           {/* Game board */}

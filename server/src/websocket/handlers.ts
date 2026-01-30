@@ -1,5 +1,5 @@
 import type { Server, Socket } from 'socket.io';
-import type { ClientToServerEvents, ServerToClientEvents, SocketData, Meld } from 'shared';
+import type { ClientToServerEvents, ServerToClientEvents, SocketData, Meld, MediaState } from 'shared';
 import { roomManager } from '../rooms/RoomManager.js';
 
 type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents, {}, SocketData>;
@@ -285,6 +285,31 @@ export function setupSocketHandlers(io: TypedServer): void {
       console.log(`Player ${playerId} reconnected successfully`);
     });
 
+    // WebRTC signaling: relay signal to target player
+    socket.on('signal', (targetPlayerId, signalData) => {
+      const targetSocketId = roomManager.getSocketIdByPlayerId(targetPlayerId);
+      const senderRoomCode = socket.data.roomCode;
+      
+      if (targetSocketId && socket.data.playerId) {
+        // Verify both players are in the same room
+        const targetPlayerRoom = roomManager.getPlayerRoom(targetPlayerId);
+        if (targetPlayerRoom === senderRoomCode) {
+          io.to(targetSocketId).emit('peerSignal', socket.data.playerId, signalData);
+        }
+      }
+    });
+
+    // WebRTC: broadcast media state change to room
+    socket.on('mediaStateChange', (state) => {
+      const roomCode = socket.data.roomCode;
+      const playerId = socket.data.playerId;
+      
+      if (roomCode && playerId) {
+        // Broadcast to all other players in the room
+        socket.to(roomCode).emit('peerMediaState', playerId, state);
+      }
+    });
+
     socket.on('disconnect', () => {
       console.log(`Player disconnected: ${socket.id}`);
       
@@ -292,6 +317,9 @@ export function setupSocketHandlers(io: TypedServer): void {
       const playerId = socket.data.playerId;
       
       if (roomCode && playerId) {
+        // Notify other players about peer leaving (for WebRTC cleanup)
+        socket.to(roomCode).emit('peerLeft', playerId);
+        
         roomManager.setPlayerConnected(playerId, false);
         roomManager.removeSocketMapping(socket.id);
         

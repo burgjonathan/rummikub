@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { useSocket } from '../context/SocketContext';
+import { VideoChat } from './VideoChat';
+import { MediaControls } from './MediaControls';
 
 export default function Lobby() {
   const { code: inviteCode } = useParams<{ code: string }>();
@@ -187,6 +189,15 @@ export default function Lobby() {
                 </li>
               ))}
             </ul>
+          </div>
+
+          {/* Video/Voice Chat Section */}
+          <div className="mb-6 p-4 bg-gray-900 rounded-lg">
+            <h2 className="text-lg font-semibold text-white mb-3">Video/Voice Chat</h2>
+            <VideoChat />
+            <div className="mt-4">
+              <MediaControls />
+            </div>
           </div>
 
           {displayError && (
