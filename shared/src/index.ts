@@ -71,6 +71,7 @@ export interface ClientToServerEvents {
   // WebRTC signaling events
   signal: (targetPlayerId: string, signalData: unknown) => void;
   mediaStateChange: (state: MediaState) => void;
+  mediaReady: () => void; // Broadcast that we're ready for WebRTC connections
 }
 
 // Events from server to client
@@ -89,6 +90,7 @@ export interface ServerToClientEvents {
   peerSignal: (fromPlayerId: string, signalData: unknown) => void;
   peerMediaState: (playerId: string, state: MediaState) => void;
   peerLeft: (playerId: string) => void;
+  peerReady: (playerId: string) => void; // A peer is ready for WebRTC connections
 }
 
 // Socket data stored on each socket

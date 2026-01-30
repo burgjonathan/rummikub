@@ -21,17 +21,17 @@ export function TileComponent({ tile, isDragging, isSelected, onClick }: TilePro
     <div
       onClick={onClick}
       className={`
-        w-12 h-16 bg-amber-50 rounded-lg border-2 flex items-center justify-center
-        font-bold text-2xl shadow-md cursor-pointer select-none
+        w-10 h-14 sm:w-12 sm:h-16 bg-amber-50 rounded-md sm:rounded-lg border-2 flex items-center justify-center
+        font-bold text-xl sm:text-2xl shadow-md cursor-pointer select-none
         transition-all duration-150
         ${isDragging ? 'opacity-50 scale-105' : ''}
-        ${isSelected ? 'ring-2 ring-emerald-500 ring-offset-2' : ''}
+        ${isSelected ? 'ring-2 ring-emerald-500 ring-offset-1 sm:ring-offset-2' : ''}
         ${tile.isJoker ? 'border-purple-400' : 'border-amber-200'}
         hover:border-amber-400 hover:shadow-lg
       `}
     >
       {tile.isJoker ? (
-        <span className="text-xl">🃏</span>
+        <span className="text-lg sm:text-xl">🃏</span>
       ) : (
         <span className={colorClasses[tile.color]}>{tile.number}</span>
       )}

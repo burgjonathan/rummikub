@@ -2,8 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
+html, body {
   @apply bg-gradient-to-br from-emerald-800 to-emerald-950 min-h-screen;
+  /* Prevent pull-to-refresh and overscroll on mobile */
+  overscroll-behavior: none;
+}
+
+/* Prevent unwanted zooming on input focus on iOS */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea {
+    font-size: 16px;
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .min-h-screen {
+    min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 /* Smooth transitions for all interactive elements */

@@ -80,6 +80,9 @@ export function MediaProvider({ children }: { children: ReactNode }) {
   // Refs for peer connections (not state to avoid re-render loops)
   const peersRef = useRef<Map<string, PeerConnection>>(new Map());
   const localStreamRef = useRef<MediaStream | null>(null);
+  
+  // Queue for signals received before media is ready
+  const pendingSignalsRef = useRef<Map<string, unknown[]>>(new Map());
 
   // Get media stream with specified devices
   const getMediaStream = useCallback(async (
@@ -159,22 +162,58 @@ export function MediaProvider({ children }: { children: ReactNode }) {
     return connection;
   }, [socket, playerId]);
 
+  // Process any queued signals that arrived before media was ready
+  const processQueuedSignals = useCallback((stream: MediaStream) => {
+    if (pendingSignalsRef.current.size === 0) return;
+    
+    console.log(`Processing ${pendingSignalsRef.current.size} queued peer(s) signals`);
+    
+    for (const [fromPlayerId, signals] of pendingSignalsRef.current) {
+      // Create peer as non-initiator since they sent us signals first
+      let connection = peersRef.current.get(fromPlayerId);
+      if (!connection) {
+        console.log(`Creating peer connection for queued signals from ${fromPlayerId}`);
+        const newConnection = createPeerConnection(fromPlayerId, false, stream);
+        if (newConnection) {
+          connection = newConnection;
+        }
+      }
+      
+      if (connection) {
+        for (const signalData of signals) {
+          try {
+            connection.peer.signal(signalData as Peer.SignalData);
+          } catch (err) {
+            console.error(`Failed to process queued signal from ${fromPlayerId}:`, err);
+          }
+        }
+      }
+    }
+    
+    pendingSignalsRef.current.clear();
+  }, [createPeerConnection]);
+
   // Connect to all players in the room
   const connectToRoom = useCallback((stream: MediaStream) => {
     if (!room || !playerId) return;
+    
+    // First, process any queued signals from peers who messaged us before we were ready
+    processQueuedSignals(stream);
     
     // Get other players in the room
     const otherPlayers = room.players.filter(p => p.id !== playerId && p.isConnected);
     
     for (const player of otherPlayers) {
+      // Skip if we already have a connection (might have been created from queued signals)
+      if (peersRef.current.has(player.id)) {
+        continue;
+      }
+      
       // Only initiate if our ID is "greater" (to avoid duplicate connections)
       const shouldInitiate = playerId > player.id;
-      
-      if (!peersRef.current.has(player.id)) {
-        createPeerConnection(player.id, shouldInitiate, stream);
-      }
+      createPeerConnection(player.id, shouldInitiate, stream);
     }
-  }, [room, playerId, createPeerConnection]);
+  }, [room, playerId, createPeerConnection, processQueuedSignals]);
 
   // Start media and connect to peers
   const startMedia = useCallback(async () => {
@@ -196,9 +235,10 @@ export function MediaProvider({ children }: { children: ReactNode }) {
       setIsVideoEnabled(true);
       setIsAudioEnabled(true);
       
-      // Broadcast our media state
+      // Broadcast our media state and that we're ready
       if (socket) {
         socket.emit('mediaStateChange', { video: true, audio: true });
+        socket.emit('mediaReady');
       }
       
       // Connect to other players in the room
@@ -307,8 +347,7 @@ export function MediaProvider({ children }: { children: ReactNode }) {
       localStreamRef.current.addTrack(newVideoTrack);
       
       // Update track in all peer connections
-      for (const [, connection] of peersRef.current) {
-        // Access internal RTCPeerConnection (simple-peer exposes this as _pc)
+      for (const [, connection] of peersRef.current) {        // Access internal RTCPeerConnection (simple-peer exposes this as _pc)
         const pc = (connection.peer as unknown as { _pc?: RTCPeerConnection })._pc;
         const sender = pc
           ?.getSenders()
@@ -376,14 +415,20 @@ export function MediaProvider({ children }: { children: ReactNode }) {
     const handlePeerSignal = (fromPlayerId: string, signalData: unknown) => {
       console.log(`Received signal from ${fromPlayerId}`);
       
+      // If we don't have a local stream yet, queue the signal for later
+      if (!localStreamRef.current) {
+        console.log(`Queueing signal from ${fromPlayerId} (no local stream yet)`);
+        const existing = pendingSignalsRef.current.get(fromPlayerId) || [];
+        existing.push(signalData);
+        pendingSignalsRef.current.set(fromPlayerId, existing);
+        return;
+      }
+      
       let connection: PeerConnection | undefined = peersRef.current.get(fromPlayerId);
       
       if (!connection) {
-        // Create a new peer as non-initiator
-        if (!localStreamRef.current) {
-          console.warn('Received signal but no local stream available');
-          return;
-        }
+        // Create a new peer as non-initiator (we received a signal, so they initiated)
+        console.log(`Creating peer connection for ${fromPlayerId} as non-initiator`);
         const newConnection = createPeerConnection(fromPlayerId, false, localStreamRef.current);
         if (newConnection) {
           connection = newConnection;
@@ -391,7 +436,11 @@ export function MediaProvider({ children }: { children: ReactNode }) {
       }
       
       if (connection) {
-        connection.peer.signal(signalData as Peer.SignalData);
+        try {
+          connection.peer.signal(signalData as Peer.SignalData);
+        } catch (err) {
+          console.error(`Failed to process signal from ${fromPlayerId}:`, err);
+        }
       }
     };
 
@@ -418,14 +467,28 @@ export function MediaProvider({ children }: { children: ReactNode }) {
       });
     };
 
+    const handlePeerReady = (peerId: string) => {
+      console.log(`Peer ${peerId} is ready for connections`);
+      
+      // If we have media active and don't have a connection to this peer, create one
+      if (localStreamRef.current && playerId && !peersRef.current.has(peerId)) {
+        // We initiate if our ID is greater, otherwise wait for their signals
+        const shouldInitiate = playerId > peerId;
+        console.log(`Creating connection to newly ready peer ${peerId}, initiator: ${shouldInitiate}`);
+        createPeerConnection(peerId, shouldInitiate, localStreamRef.current);
+      }
+    };
+
     socket.on('peerSignal', handlePeerSignal);
     socket.on('peerMediaState', handlePeerMediaState);
     socket.on('peerLeft', handlePeerLeft);
+    socket.on('peerReady', handlePeerReady);
 
     return () => {
       socket.off('peerSignal', handlePeerSignal);
       socket.off('peerMediaState', handlePeerMediaState);
       socket.off('peerLeft', handlePeerLeft);
+      socket.off('peerReady', handlePeerReady);
     };
   }, [socket, playerId, createPeerConnection]);
 

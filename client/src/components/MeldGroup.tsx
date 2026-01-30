@@ -18,7 +18,7 @@ export default function MeldGroup({ meld, selectedTileIds, onTileSelect }: MeldG
     <div
       ref={setNodeRef}
       className={`
-        inline-flex gap-1 p-2 rounded-lg bg-emerald-700/50 border-2
+        inline-flex gap-0.5 sm:gap-1 p-1 sm:p-2 rounded-md sm:rounded-lg bg-emerald-700/50 border-2
         transition-all duration-200
         ${isOver ? 'border-emerald-300 bg-emerald-600/50' : 'border-transparent'}
       `}

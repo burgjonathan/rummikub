@@ -285,19 +285,19 @@ export default function Game() {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="min-h-screen p-4 flex flex-col gap-4">
+      <div className="min-h-screen p-2 sm:p-4 flex flex-col gap-2 sm:gap-4">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-white">Rummikub</h1>
-          <div className="flex items-center gap-4">
+          <h1 className="text-lg sm:text-2xl font-bold text-white">Rummikub</h1>
+          <div className="flex items-center gap-2 sm:gap-4">
             {isMyTurn && (
-              <span className="bg-emerald-500 text-white px-4 py-2 rounded-full font-semibold animate-pulse">
+              <span className="bg-emerald-500 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-full text-xs sm:text-base font-semibold animate-pulse">
                 Your Turn!
               </span>
             )}
             <button
               onClick={handleLeave}
-              className="text-white/60 hover:text-white transition-colors"
+              className="text-white/60 hover:text-white transition-colors text-sm sm:text-base"
             >
               Leave Game
             </button>
@@ -306,32 +306,34 @@ export default function Game() {
 
         {/* Error display */}
         {(localError || error) && (
-          <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-2 rounded-lg">
+          <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-3 py-2 rounded-lg text-sm">
             {localError || error}
           </div>
         )}
 
-        {/* Main game area */}
-        <div className="flex gap-4 flex-1">
-          {/* Left sidebar - players and video */}
-          <div className="w-64 shrink-0 flex flex-col gap-4">
-            <PlayerList
-              players={gameState.players}
-              currentPlayerId={gameState.currentPlayerId}
-              myPlayerId={playerId}
-            />
+        {/* Main game area - stacks on mobile, side-by-side on desktop */}
+        <div className="flex flex-col lg:flex-row gap-2 sm:gap-4 flex-1 min-h-0">
+          {/* Left sidebar - players and video - horizontal scroll on mobile */}
+          <div className="lg:w-56 xl:w-64 shrink-0 flex flex-row lg:flex-col gap-2 sm:gap-4 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
+            <div className="min-w-[160px] sm:min-w-[200px] lg:min-w-0 lg:w-full">
+              <PlayerList
+                players={gameState.players}
+                currentPlayerId={gameState.currentPlayerId}
+                myPlayerId={playerId}
+              />
+            </div>
             
-            {/* Video Chat */}
-            <div className="bg-gray-800/50 rounded-lg p-3">
+            {/* Video Chat - compact on mobile */}
+            <div className="min-w-[200px] sm:min-w-[240px] lg:min-w-0 lg:w-full bg-gray-800/50 rounded-lg p-2 sm:p-3">
               <VideoChat />
-              <div className="mt-3">
+              <div className="mt-2 sm:mt-3">
                 <MediaControls />
               </div>
             </div>
           </div>
 
-          {/* Game board */}
-          <div className="flex-1 flex flex-col gap-4">
+          {/* Game board and actions */}
+          <div className="flex-1 flex flex-col gap-2 sm:gap-4 min-h-0">
             <GameBoard
               melds={localBoard}
               selectedTileIds={selectedTileIds}
@@ -339,27 +341,27 @@ export default function Game() {
               poolCount={gameState.pool}
             />
 
-            {/* Action buttons */}
+            {/* Action buttons - smaller on mobile */}
             {isMyTurn && (
-              <div className="flex gap-3 justify-center">
+              <div className="flex gap-2 sm:gap-3 justify-center flex-wrap">
                 <button
                   onClick={handlePlayTiles}
                   disabled={isSubmitting || !hasPlayedTiles}
-                  className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+                  className="px-3 sm:px-6 py-2 sm:py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm sm:text-base font-semibold rounded-lg transition-colors"
                 >
                   {isSubmitting ? 'Playing...' : 'End Turn'}
                 </button>
                 <button
                   onClick={handleDrawTile}
                   disabled={isSubmitting}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
+                  className="px-3 sm:px-6 py-2 sm:py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white text-sm sm:text-base font-semibold rounded-lg transition-colors"
                 >
                   Draw Tile
                 </button>
                 <button
                   onClick={handleUndo}
                   disabled={isSubmitting}
-                  className="px-6 py-3 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
+                  className="px-3 sm:px-6 py-2 sm:py-3 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-600 text-white text-sm sm:text-base font-semibold rounded-lg transition-colors"
                 >
                   Undo
                 </button>

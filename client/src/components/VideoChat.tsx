@@ -27,7 +27,7 @@ function VideoTile({ stream, name, isLocal = false, isMuted = false, isVideoOff 
     .slice(0, 2);
 
   return (
-    <div className="relative bg-gray-800 rounded-lg overflow-hidden aspect-video">
+    <div className="relative bg-gray-800 rounded-md sm:rounded-lg overflow-hidden aspect-video min-w-[80px]">
       {stream && !isVideoOff ? (
         <video
           ref={videoRef}
@@ -38,18 +38,18 @@ function VideoTile({ stream, name, isLocal = false, isMuted = false, isVideoOff 
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-gray-700">
-          <div className="w-16 h-16 rounded-full bg-gray-600 flex items-center justify-center text-xl font-bold text-gray-300">
+          <div className="w-8 h-8 sm:w-16 sm:h-16 rounded-full bg-gray-600 flex items-center justify-center text-sm sm:text-xl font-bold text-gray-300">
             {initials}
           </div>
         </div>
       )}
       
       {/* Name badge */}
-      <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-sm text-white flex items-center gap-2">
-        {isLocal && <span className="text-xs text-gray-400">(You)</span>}
-        <span>{name}</span>
+      <div className="absolute bottom-1 sm:bottom-2 left-1 sm:left-2 bg-black/60 px-1 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-sm text-white flex items-center gap-1 sm:gap-2">
+        {isLocal && <span className="text-[8px] sm:text-xs text-gray-400">(You)</span>}
+        <span className="truncate max-w-[50px] sm:max-w-none">{name}</span>
         {isMuted && (
-          <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-3 h-3 sm:w-4 sm:h-4 text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
           </svg>
@@ -57,7 +57,7 @@ function VideoTile({ stream, name, isLocal = false, isMuted = false, isVideoOff 
       </div>
       
       {isLocal && (
-        <div className="absolute top-2 right-2 bg-blue-500/80 px-2 py-0.5 rounded text-xs text-white">
+        <div className="absolute top-1 sm:top-2 right-1 sm:right-2 bg-blue-500/80 px-1 sm:px-2 py-0.5 rounded text-[8px] sm:text-xs text-white">
           LIVE
         </div>
       )}

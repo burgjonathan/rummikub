@@ -32,20 +32,20 @@ export default function PlayerHand({
     <div
       ref={setNodeRef}
       className={`
-        bg-amber-800/80 backdrop-blur rounded-2xl p-4 shadow-xl
+        bg-amber-800/80 backdrop-blur rounded-xl sm:rounded-2xl p-2 sm:p-4 shadow-xl
         transition-all duration-200
         ${isOver ? 'ring-4 ring-amber-400' : ''}
         ${!isMyTurn ? 'opacity-75' : ''}
       `}
     >
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-white font-semibold">Your Tiles ({tiles.length})</h3>
+      <div className="flex items-center justify-between mb-2 sm:mb-3">
+        <h3 className="text-white font-semibold text-sm sm:text-base">Your Tiles ({tiles.length})</h3>
         {!isMyTurn && (
-          <span className="text-amber-300 text-sm">Wait for your turn</span>
+          <span className="text-amber-300 text-xs sm:text-sm">Wait for your turn</span>
         )}
       </div>
       
-      <div className="flex flex-wrap gap-2 min-h-[80px]">
+      <div className="flex flex-wrap gap-1 sm:gap-2 min-h-[60px] sm:min-h-[80px] max-h-[30vh] overflow-y-auto">
         {sortedTiles.map((tile) => (
           <DraggableTile
             key={tile.id}
@@ -55,7 +55,7 @@ export default function PlayerHand({
           />
         ))}
         {tiles.length === 0 && (
-          <div className="flex items-center justify-center w-full text-amber-300/50 italic">
+          <div className="flex items-center justify-center w-full text-amber-300/50 italic text-sm">
             No tiles
           </div>
         )}

@@ -310,6 +310,17 @@ export function setupSocketHandlers(io: TypedServer): void {
       }
     });
 
+    // WebRTC: broadcast that player is ready for connections
+    socket.on('mediaReady', () => {
+      const roomCode = socket.data.roomCode;
+      const playerId = socket.data.playerId;
+      
+      if (roomCode && playerId) {
+        // Notify all other players in the room that this player is ready
+        socket.to(roomCode).emit('peerReady', playerId);
+      }
+    });
+
     socket.on('disconnect', () => {
       console.log(`Player disconnected: ${socket.id}`);
       
