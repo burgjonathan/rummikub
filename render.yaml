@@ -3,14 +3,12 @@
 
 services:
   - type: web
-    name: rummikub-server
+    name: rummikub
     runtime: node
     region: oregon
     plan: free
-    buildCommand: npm install --include=dev && npm run build -w shared && npm run build -w server
+    buildCommand: npm install --include=dev && npm run build
     startCommand: node server/dist/index.js
     envVars:
       - key: NODE_ENV
         value: production
-      - key: CLIENT_URL
-        value: https://burgjonathan.github.io
