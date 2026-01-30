@@ -308,7 +308,9 @@ export function MediaProvider({ children }: { children: ReactNode }) {
       
       // Update track in all peer connections
       for (const [, connection] of peersRef.current) {
-        const sender = connection.peer._pc
+        // Access internal RTCPeerConnection (simple-peer exposes this as _pc)
+        const pc = (connection.peer as unknown as { _pc?: RTCPeerConnection })._pc;
+        const sender = pc
           ?.getSenders()
           .find((s: RTCRtpSender) => s.track?.kind === 'video');
         if (sender) {
@@ -348,7 +350,9 @@ export function MediaProvider({ children }: { children: ReactNode }) {
       
       // Update track in all peer connections
       for (const [, connection] of peersRef.current) {
-        const sender = connection.peer._pc
+        // Access internal RTCPeerConnection (simple-peer exposes this as _pc)
+        const pc = (connection.peer as unknown as { _pc?: RTCPeerConnection })._pc;
+        const sender = pc
           ?.getSenders()
           .find((s: RTCRtpSender) => s.track?.kind === 'audio');
         if (sender) {
@@ -372,7 +376,7 @@ export function MediaProvider({ children }: { children: ReactNode }) {
     const handlePeerSignal = (fromPlayerId: string, signalData: unknown) => {
       console.log(`Received signal from ${fromPlayerId}`);
       
-      let connection = peersRef.current.get(fromPlayerId);
+      let connection: PeerConnection | undefined = peersRef.current.get(fromPlayerId);
       
       if (!connection) {
         // Create a new peer as non-initiator
@@ -380,7 +384,10 @@ export function MediaProvider({ children }: { children: ReactNode }) {
           console.warn('Received signal but no local stream available');
           return;
         }
-        connection = createPeerConnection(fromPlayerId, false, localStreamRef.current);
+        const newConnection = createPeerConnection(fromPlayerId, false, localStreamRef.current);
+        if (newConnection) {
+          connection = newConnection;
+        }
       }
       
       if (connection) {
