@@ -1,15 +1,23 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig({
   // Base path for GitHub Pages (e.g., /rummikub/)
   // Set via environment variable or default to '/' for local dev
   base: process.env.VITE_BASE_PATH || '/',
-  plugins: [react()],
-  // Polyfill Node.js globals for simple-peer compatibility
-  define: {
-    global: 'globalThis',
-  },
+  plugins: [
+    react(),
+    // Polyfill Node.js modules for simple-peer compatibility
+    nodePolyfills({
+      include: ['buffer', 'process', 'stream', 'events'],
+      globals: {
+        Buffer: true,
+        global: true,
+        process: true,
+      },
+    }),
+  ],
   server: {
     port: 5173,
     allowedHosts: ['rummikub.loca.lt'],
