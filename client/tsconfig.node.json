@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "lib": ["ES2022"],
+    "allowSyntheticDefaultImports": true,
+    "outDir": "./dist-node"
+  },
+  "include": ["vite.config.ts"]
+}
