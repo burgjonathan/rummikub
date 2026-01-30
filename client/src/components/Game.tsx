@@ -7,6 +7,7 @@ import {
   DragStartEvent,
   closestCenter,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
@@ -63,6 +64,12 @@ export default function Game() {
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 150,
+        tolerance: 5,
       },
     })
   );

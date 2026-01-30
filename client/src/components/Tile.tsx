@@ -51,12 +51,11 @@ export function DraggableTile({ tile, isSelected, onClick }: DraggableTileProps)
     data: { tile },
   });
 
-  const style = transform
-    ? {
-        transform: CSS.Translate.toString(transform),
-        zIndex: isDragging ? 1000 : undefined,
-      }
-    : undefined;
+  const style: React.CSSProperties = {
+    transform: transform ? CSS.Translate.toString(transform) : undefined,
+    zIndex: isDragging ? 1000 : undefined,
+    touchAction: 'none',
+  };
 
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
