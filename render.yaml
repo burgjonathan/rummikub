@@ -7,8 +7,7 @@ services:
     runtime: node
     region: oregon
     plan: free
-    nodeVersion: "20"
-    buildCommand: npm ci && npm run build -w shared && npm run build -w server
+    buildCommand: npm install --include=dev && npm run build -w shared && npm run build -w server
     startCommand: node server/dist/index.js
     envVars:
       - key: NODE_ENV
