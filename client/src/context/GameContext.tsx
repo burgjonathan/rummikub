@@ -1,6 +1,33 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from 'react';
 import type { GameState, Room, Tile, Meld, Player } from 'shared';
 import { useSocket } from './SocketContext';
+
+// Session persistence helpers
+const SESSION_KEY = 'rummikub_session';
+
+interface SessionData {
+  playerId: string;
+  roomCode: string;
+  playerName: string;
+}
+
+function saveSession(data: SessionData): void {
+  localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+}
+
+function loadSession(): SessionData | null {
+  try {
+    const data = localStorage.getItem(SESSION_KEY);
+    if (!data) return null;
+    return JSON.parse(data);
+  } catch {
+    return null;
+  }
+}
+
+function clearSession(): void {
+  localStorage.removeItem(SESSION_KEY);
+}
 
 interface GameContextType {
   // Room state
@@ -8,6 +35,7 @@ interface GameContextType {
   isHost: boolean;
   playerId: string | null;
   playerName: string | null;
+  isReconnecting: boolean;
   
   // Game state
   gameState: GameState | null;
@@ -39,11 +67,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [playerName, setPlayerName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isReconnecting, setIsReconnecting] = useState(false);
+  
+  const reconnectAttemptedRef = useRef(false);
 
-  // Set player ID from socket
+  // Attempt reconnection when socket connects
   useEffect(() => {
-    if (socket && isConnected) {
-      setPlayerId(socket.id ?? null);
+    if (!socket || !isConnected) return;
+    
+    // Only attempt reconnection once per socket connection
+    if (reconnectAttemptedRef.current) return;
+    
+    const session = loadSession();
+    if (session) {
+      console.log('Attempting to reconnect to room:', session.roomCode);
+      reconnectAttemptedRef.current = true;
+      setIsReconnecting(true);
+      setPlayerName(session.playerName);
+      socket.emit('reconnect', session.playerId, session.roomCode);
     }
   }, [socket, isConnected]);
 
@@ -73,14 +114,74 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setError(message);
     });
 
+    // Handle receiving stable playerId after joining/creating room
+    socket.on('roomJoined', (stablePlayerId) => {
+      console.log('Received stable playerId:', stablePlayerId);
+      setPlayerId(stablePlayerId);
+    });
+    
+    // Reset reconnect flag when socket disconnects
+    socket.on('disconnect', () => {
+      reconnectAttemptedRef.current = false;
+    });
+
+    // Handle successful reconnection
+    socket.on('reconnected', (data) => {
+      console.log('Reconnected successfully:', data);
+      setIsReconnecting(false);
+      setRoom(data.room);
+      
+      // Find our playerId from the room
+      const session = loadSession();
+      if (session) {
+        setPlayerId(session.playerId);
+      }
+      
+      if (data.gameState) {
+        setGameState(data.gameState);
+      }
+      if (data.tiles) {
+        setMyTiles(data.tiles);
+      }
+    });
+
+    // Handle failed reconnection
+    socket.on('reconnectFailed', (reason) => {
+      console.log('Reconnection failed:', reason);
+      setIsReconnecting(false);
+      clearSession();
+      // Reset state to show lobby
+      setRoom(null);
+      setGameState(null);
+      setMyTiles([]);
+      setPlayerId(null);
+      setPlayerName(null);
+    });
+
     return () => {
       socket.off('roomUpdate');
       socket.off('gameStart');
       socket.off('gameUpdate');
       socket.off('gameOver');
       socket.off('error');
+      socket.off('roomJoined');
+      socket.off('reconnected');
+      socket.off('reconnectFailed');
+      socket.off('disconnect');
     };
   }, [socket]);
+
+  // Save session when we have all required data
+  useEffect(() => {
+    if (playerId && room && playerName && !isReconnecting) {
+      saveSession({
+        playerId,
+        roomCode: room.code,
+        playerName,
+      });
+      console.log('Session saved:', { playerId, roomCode: room.code, playerName });
+    }
+  }, [playerId, room, playerName, isReconnecting]);
 
   const createRoom = useCallback(async (name: string): Promise<string> => {
     if (!socket) throw new Error('Not connected');
@@ -115,9 +216,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const leaveRoom = useCallback(() => {
     if (!socket) return;
     socket.emit('leaveRoom');
+    clearSession();
     setRoom(null);
     setGameState(null);
     setMyTiles([]);
+    setPlayerId(null);
+    setPlayerName(null);
   }, [socket]);
 
   const startGame = useCallback(async (): Promise<void> => {
@@ -190,6 +294,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         isHost,
         playerId,
         playerName,
+        isReconnecting,
         gameState,
         myTiles,
         isMyTurn,

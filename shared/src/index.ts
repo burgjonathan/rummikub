@@ -61,6 +61,7 @@ export interface ClientToServerEvents {
   playTiles: (melds: Meld[], callback: (response: { success: boolean; error?: string }) => void) => void;
   drawTile: (callback: (response: { success: boolean; error?: string }) => void) => void;
   undoTurn: (callback: (response: { success: boolean; error?: string }) => void) => void;
+  reconnect: (playerId: string, roomCode: string) => void;
 }
 
 // Events from server to client
@@ -72,6 +73,9 @@ export interface ServerToClientEvents {
   playerJoined: (player: Player) => void;
   playerLeft: (playerId: string) => void;
   error: (message: string) => void;
+  roomJoined: (playerId: string) => void;
+  reconnected: (data: { room: Room; gameState?: GameState; tiles?: Tile[] }) => void;
+  reconnectFailed: (reason: string) => void;
 }
 
 // Socket data stored on each socket
