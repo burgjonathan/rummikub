@@ -1,0 +1,16 @@
+# Render Blueprint
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: rummikub-server
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build -w shared && npm run build -w server
+    startCommand: npm start -w server
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CLIENT_URL
+        sync: false  # Set manually in dashboard
