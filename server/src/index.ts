@@ -13,12 +13,15 @@ const httpServer = createServer(app);
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
+  'https://burgjonathan.github.io',
 ];
 
 // Add production client URL if set
 if (process.env.CLIENT_URL) {
   allowedOrigins.push(process.env.CLIENT_URL);
 }
+
+console.log('Allowed CORS origins:', allowedOrigins);
 
 const io = new Server<ClientToServerEvents, ServerToClientEvents, {}, SocketData>(httpServer, {
   cors: {
