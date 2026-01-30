@@ -7,10 +7,11 @@ services:
     runtime: node
     region: oregon
     plan: free
-    buildCommand: npm install && npm run build -w shared && npm run build -w server
-    startCommand: npm start -w server
+    nodeVersion: "20"
+    buildCommand: npm ci && npm run build -w shared && npm run build -w server
+    startCommand: node server/dist/index.js
     envVars:
       - key: NODE_ENV
         value: production
       - key: CLIENT_URL
-        sync: false  # Set manually in dashboard
+        sync: false
